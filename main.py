@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, status
 from supabase import Client, create_client
 from supabase_auth.errors import AuthApiError
 from app.schemas.auth import AuthRequest
+from fastapi import Header
 
 load_dotenv()
 
@@ -81,3 +82,31 @@ def login(request: AuthRequest):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid login credentials"
         )
+
+@app.get("/public/info")
+def public_info():
+    return {
+        "message": "Welcome stranger! This info is public."
+    }
+
+@app.get("/protected/profile")
+def protected_profile(authorization: str | None = Header(default=None)):
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token required"
+        )
+
+    token = authorization[7:]
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token required"
+        )
+
+    return {
+        "message": "You reached the protected profile",
+        "token": token
+    }
