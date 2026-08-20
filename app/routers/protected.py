@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Header, HTTPException, status
+from app.supabase_client import supabase
 
 
 router = APIRouter(
@@ -32,7 +33,19 @@ def protected_profile(
             detail="Access token required"
         )
 
-    return {
-        "message": "You reached the protected profile",
-        "token": token
-    }
+    try:
+        response = supabase.auth.get_user(token)
+
+        user = response.user
+
+        return {
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
